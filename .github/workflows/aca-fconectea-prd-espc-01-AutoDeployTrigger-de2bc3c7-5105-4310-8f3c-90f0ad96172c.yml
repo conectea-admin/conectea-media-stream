@@ -1,0 +1,49 @@
+name: Trigger auto deployment for aca-fconectea-prd-espc-01
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/aca-fconectea-prd-espc-01-AutoDeployTrigger-de2bc3c7-5105-4310-8f3c-90f0ad96172c.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.ACAFCONECTEAPRDESPC01_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.ACAFCONECTEAPRDESPC01_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.ACAFCONECTEAPRDESPC01_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: acrfconecteaprdespc01.azurecr.io
+          registryUsername: ${{ secrets.ACAFCONECTEAPRDESPC01_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.ACAFCONECTEAPRDESPC01_REGISTRY_PASSWORD }}
+          containerAppName: aca-fconectea-prd-espc-01
+          resourceGroup: rg-fundacionconectea-esc
+          imageToBuild: acrfconecteaprdespc01.azurecr.io/aca-fconectea-prd-espc-01:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
