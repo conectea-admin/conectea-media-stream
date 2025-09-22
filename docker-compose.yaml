@@ -1,0 +1,11 @@
+services:
+  conectea-media-stream:
+    image: conectea-media-stream
+    build:
+      context: .
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
