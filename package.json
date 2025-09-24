@@ -6,7 +6,7 @@
     "dev": "bun run --watch src/index.ts",
     "check": "biome check",
     "check:write": "biome check --write",
-    "prepare": "lefthook install"
+    "lefthook:install": "lefthook install"
   },
   "dependencies": {
     "@elysiajs/openapi": "1.4.10",
