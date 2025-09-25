@@ -24,6 +24,7 @@ FROM gcr.io/distroless/base
 WORKDIR /app
 
 COPY --from=build /app/server server
+COPY --from=build /app/src/scalar.css ./src/scalar.css
 
 ENV NODE_ENV=production
 
