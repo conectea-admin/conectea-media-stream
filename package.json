@@ -9,6 +9,7 @@
     "lefthook:install": "lefthook install"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.0",
     "@elysiajs/openapi": "1.4.10",
     "@types/pg": "8.15.5",
     "better-auth": "1.3.16",
