@@ -6,4 +6,6 @@ export const passthroughHeaders = [
   "cache-control",
   "last-modified",
   "etag",
-] as const;
+  "content-disposition",
+  "x-content-type-options"
+];
