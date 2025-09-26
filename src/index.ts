@@ -77,11 +77,6 @@ const app = new Elysia()
         if (v) responseHeaders.set(key, v);
       }
 
-      const contentDispositionValue = upstream.headers.get("content-disposition");
-      if (contentDispositionValue && contentDispositionValue.toLowerCase().startsWith("attachment")) responseHeaders.set("content-disposition", "inline");
-
-      if (!range && upstream.status === 200) responseHeaders.delete("content-range");
-
       const res = new Response(upstream.body, {
         status: upstream.status,
         headers: responseHeaders
