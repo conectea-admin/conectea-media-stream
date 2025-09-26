@@ -10,7 +10,7 @@ import { getGoogleAccessToken } from "@/lib/google";
 const port = env.PORT || 3000;
 const styles = await Bun.file("./src/scalar.css").text();
 
-export type GoogleAPIDriveFileResponseStatus = 200 | 206 | 400 | 401 | 403 | 404 | 416 | 429 | 500
+export type GoogleAPIDriveFileResponseStatus = 200 | 206 | 400 | 401 | 403 | 404 | 429 | 500
 
 const app = new Elysia()
   .use(
@@ -90,7 +90,6 @@ const app = new Elysia()
         401: z.literal("Unauthorized"),
         403: z.literal("Forbidden"),
         404: z.literal("Not Found"),
-        416: z.literal("Range Not Satisfiable"),
         429: z.literal("Too Many Requests"),
         500: z.literal("Internal Server Error"),
       },
