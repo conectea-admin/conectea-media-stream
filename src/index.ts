@@ -44,7 +44,7 @@ const app = new Elysia()
   )
   .get(
     "/api/media/stream/:id",
-    async ({ params, headers }) => {
+    async ({ params, headers, status }) => {
       const { id } = params;
       const range = headers.range;
       const accessToken = await getGoogleAccessToken();
@@ -68,7 +68,7 @@ const app = new Elysia()
       });
 
       if (!upstream.ok) {
-        return new Response("Failed to fetch media", { status: 500 });
+        return status( 500, "Failed to fetch media");
       }
 
       const responseHeaders = new Headers();
@@ -82,10 +82,22 @@ const app = new Elysia()
 
       if (!range && upstream.status === 200) responseHeaders.delete("content-range");
 
-      return new Response(upstream.body, {
+      const res = new Response(upstream.body, {
         status: upstream.status,
         headers: responseHeaders
       });
+
+      let mappedStatus: 200 | 206 | 500;
+      if (upstream.status === 200) {
+        mappedStatus = 200;
+      } else if (upstream.status === 206) {
+        mappedStatus = 206;
+      } else {
+        mappedStatus = 500;
+      }
+
+      return status(mappedStatus, res);
+
     },
     {
       response: {
