@@ -44,7 +44,7 @@ const app = new Elysia()
   )
   .get(
     "/api/media/stream/:id",
-    async ({ params, headers, status }) => {
+    async ({ params, headers }) => {
       const { id } = params;
       const range = headers.range;
       const accessToken = await getGoogleAccessToken();
@@ -64,26 +64,32 @@ const app = new Elysia()
 
       const upstream = await fetch(url, {
         headers: reqHeaders,
+        redirect: "follow"
       });
 
       if (!upstream.ok) {
-        status(500, "Failed to fetch media");
+        return new Response("Failed to fetch media", { status: 500 });
       }
 
-      const res = new Response(upstream.body, {
+      const responseHeaders = new Headers();
+      for (const key of passthroughHeaders) {
+        const v = upstream.headers.get(key);
+        if (v) responseHeaders.set(key, v);
+      }
+
+      const contentDispositionValue = upstream.headers.get("content-disposition");
+      if (contentDispositionValue && contentDispositionValue.toLowerCase().startsWith("attachment")) responseHeaders.set("content-disposition", "inline");
+
+      if (!range && upstream.status === 200) responseHeaders.delete("content-range");
+
+      return new Response(upstream.body, {
         status: upstream.status,
-        headers: upstream.headers,
+        headers: responseHeaders
       });
-
-      for (const h of passthroughHeaders) {
-        const v = upstream.headers.get(h);
-        if (v) res.headers.set(h, v);
-      }
-
-      return status(206, res);
     },
     {
       response: {
+        200: z.unknown(),
         206: z.unknown(),
         500: z.literal("Failed to fetch media"),
       },
