@@ -10,6 +10,8 @@ import { getGoogleAccessToken } from "@/lib/google";
 const port = env.PORT || 3000;
 const styles = await Bun.file("./src/scalar.css").text();
 
+export type GoogleAPIDriveFileResponseStatus = 200 | 206 | 400 | 401 | 403 | 404 | 416 | 429 | 500
+
 const app = new Elysia()
   .use(
     openapi({
@@ -44,7 +46,7 @@ const app = new Elysia()
   )
   .get(
     "/api/media/stream/:id",
-    async ({ params, headers, status }) => {
+    async ({ params, headers, status, set }) => {
       const { id } = params;
       const range = headers.range;
       const accessToken = await getGoogleAccessToken();
@@ -64,41 +66,33 @@ const app = new Elysia()
 
       const upstream = await fetch(url, {
         headers: reqHeaders,
-        redirect: "follow"
+        redirect: "follow",
       });
-
-      if (!upstream.ok) {
-        return status( 500, "Failed to fetch media");
-      }
-
-      const responseHeaders = new Headers();
-      for (const key of passthroughHeaders) {
-        const v = upstream.headers.get(key);
-        if (v) responseHeaders.set(key, v);
-      }
 
       const res = new Response(upstream.body, {
         status: upstream.status,
-        headers: responseHeaders
       });
 
-      let mappedStatus: 200 | 206 | 500;
-      if (upstream.status === 200) {
-        mappedStatus = 200;
-      } else if (upstream.status === 206) {
-        mappedStatus = 206;
-      } else {
-        mappedStatus = 500;
+      for (const key of passthroughHeaders) {
+        const v = upstream.headers.get(key);
+        if (v) set.headers[key] = v;
       }
 
-      return status(mappedStatus, res);
+      const mappedStatus = upstream.status as GoogleAPIDriveFileResponseStatus;
 
+      return status(mappedStatus, res);
     },
     {
       response: {
         200: z.unknown(),
         206: z.unknown(),
-        500: z.literal("Failed to fetch media"),
+        400: z.literal("Bad Request"),
+        401: z.literal("Unauthorized"),
+        403: z.literal("Forbidden"),
+        404: z.literal("Not Found"),
+        416: z.literal("Range Not Satisfiable"),
+        429: z.literal("Too Many Requests"),
+        500: z.literal("Internal Server Error"),
       },
       params: z.object({
         id: z.string(),
